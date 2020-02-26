@@ -5,7 +5,7 @@ Example:
 
     // Error handling omitted for simplicity.
 
-    import "github.com/udhos/gwob"
+    import "github.com/breiting/gwob"
 
     options := &gwob.ObjParserOptions{} // parser options
 
@@ -16,7 +16,7 @@ Example:
         // snip
     }
 
-See also: https://github.com/udhos/gwob
+See also: https://github.com/breiting/gwob
 */
 package gwob
 
@@ -282,7 +282,7 @@ func (o *Obj) ToFile(filename string) error {
 // ToWriter writes OBJ to writer stream.
 func (o *Obj) ToWriter(w io.Writer) error {
 
-	fmt.Fprintf(w, "# OBJ exported by gwob - https://github.com/udhos/gwob\n")
+	fmt.Fprintf(w, "# OBJ exported by gwob - https://github.com/breiting/gwob\n")
 	fmt.Fprintf(w, "\n")
 
 	if o.Mtllib != "" {

@@ -1,7 +1,7 @@
 /*
 Package main shows how to use the 'gwob' package to parse geometry data from OBJ files.
 
-See also: https://github.com/udhos/gwob
+See also: https://github.com/breiting/gwob
 */
 package main
 
@@ -10,7 +10,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/udhos/gwob"
+	"github.com/breiting/gwob"
 )
 
 func main() {
