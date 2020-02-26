@@ -1,6 +1,7 @@
 package gwob
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 )
@@ -29,7 +30,7 @@ func BenchmarkForwardVertex1(b *testing.B) {
 	}
 }
 
-const LOG_STATS = false
+const LogStats = false
 
 func expectInt(t *testing.T, label string, want, got int) {
 	if want != got {
@@ -67,7 +68,7 @@ func sliceEqualFloat(a, b []float32) bool {
 
 func TestCube(t *testing.T) {
 
-	options := ObjParserOptions{LogStats: LOG_STATS, Logger: func(msg string) { fmt.Printf("TestCube NewObjFromBuf: log: %s\n", msg) }}
+	options := ObjParserOptions{LogStats: LogStats, Logger: func(msg string) { fmt.Printf("TestCube NewObjFromBuf: log: %s\n", msg) }}
 
 	o, err := NewObjFromBuf("cubeObj", []byte(cubeObj), &options)
 	if err != nil {
@@ -100,9 +101,104 @@ func TestCube(t *testing.T) {
 	}
 }
 
+func TestWriteEmpty(t *testing.T) {
+
+	// load
+	options := ObjParserOptions{LogStats: LogStats, Logger: func(msg string) { fmt.Printf("TestWriteEmpty NewObjFromBuf: log: %s\n", msg) }}
+	orig, err := NewObjFromBuf("empty", []byte{}, &options)
+	if err != nil {
+		t.Errorf("TestWriteEmpty: NewObjFromBuf: %v", err)
+		return
+	}
+
+	// export
+	buf := bytes.Buffer{}
+	errWrite := orig.ToWriter(&buf)
+	if errWrite != nil {
+		t.Errorf("TestWriteEmpty: ToWriter: %v", errWrite)
+		return
+	}
+
+	// reload
+	_, errParse := NewObjFromReader("emtpy-reload", &buf, &options)
+	if errParse != nil {
+		t.Errorf("TestWriteEmpty: NewObjFromReader: %v", errParse)
+		return
+	}
+}
+
+func TestWriteBad(t *testing.T) {
+
+	// load
+	orig, err := NewObjFromVertex("bad", []float32{}, []int{0})
+	if err != nil {
+		t.Errorf("TestWriteBad: NewObjFromVertex: %v", err)
+		return
+	}
+
+	// export
+	buf := bytes.Buffer{}
+	errWrite := orig.ToWriter(&buf)
+	if errWrite == nil {
+		t.Errorf("TestWriteBad: unexpected writer success for bad group index count (non multiple of 3)")
+		return
+	}
+
+}
+
+func TestCubeWrite(t *testing.T) {
+
+	// load cube
+	options := ObjParserOptions{LogStats: LogStats, Logger: func(msg string) { fmt.Printf("TestCube NewObjFromBuf: log: %s\n", msg) }}
+	orig, err := NewObjFromBuf("cube-orig", []byte(cubeObj), &options)
+	if err != nil {
+		t.Errorf("TestCubeWrite: NewObjFromBuf: %v", err)
+		return
+	}
+
+	// export cube
+	buf := bytes.Buffer{}
+	errWrite := orig.ToWriter(&buf)
+	if errWrite != nil {
+		t.Errorf("TestCubeWrite: ToWriter: %v", errWrite)
+		return
+	}
+
+	// reload cube
+	o, errParse := NewObjFromReader("cube-reload", &buf, &options)
+	if errParse != nil {
+		t.Errorf("TestCubeWrite: NewObjFromReader: %v", errParse)
+		return
+	}
+
+	if !sliceEqualInt(cubeIndices, o.Indices) {
+		t.Errorf("TestCubeWrite: indices: want=%v got=%v", cubeIndices, o.Indices)
+	}
+
+	if !sliceEqualFloat(cubeCoord, o.Coord) {
+		t.Errorf("TestCubeWrite: coord: want=%d%v got=%d%v", len(cubeCoord), cubeCoord, len(o.Coord), o.Coord)
+	}
+
+	if o.StrideSize != cubeStrideSize {
+		t.Errorf("TestCubeWrite: stride size: want=%d got=%d", cubeStrideSize, o.StrideSize)
+	}
+
+	if o.StrideOffsetPosition != cubeStrideOffsetPosition {
+		t.Errorf("TestCubeWrite: stride offset position: want=%d got=%d", cubeStrideOffsetPosition, o.StrideOffsetPosition)
+	}
+
+	if o.StrideOffsetTexture != cubeStrideOffsetTexture {
+		t.Errorf("TestCubeWrite: stride offset texture: want=%d got=%d", cubeStrideOffsetTexture, o.StrideOffsetTexture)
+	}
+
+	if o.StrideOffsetNormal != cubeStrideOffsetNormal {
+		t.Errorf("TestCubeWrite: stride offset normal: want=%d got=%d", cubeStrideOffsetNormal, o.StrideOffsetNormal)
+	}
+}
+
 func TestRelativeIndex(t *testing.T) {
 
-	options := ObjParserOptions{LogStats: LOG_STATS, Logger: func(msg string) { fmt.Printf("TestRelativeIndex NewObjFromBuf: log: %s\n", msg) }}
+	options := ObjParserOptions{LogStats: LogStats, Logger: func(msg string) { fmt.Printf("TestRelativeIndex NewObjFromBuf: log: %s\n", msg) }}
 
 	o, err := NewObjFromBuf("relativeObj", []byte(relativeObj), &options)
 	if err != nil {
@@ -123,7 +219,7 @@ func TestRelativeIndex(t *testing.T) {
 
 func TestForwardVertex(t *testing.T) {
 
-	options := ObjParserOptions{LogStats: LOG_STATS, Logger: func(msg string) { fmt.Printf("TestForwardVertex NewObjFromBuf: log: %s\n", msg) }}
+	options := ObjParserOptions{LogStats: LogStats, Logger: func(msg string) { fmt.Printf("TestForwardVertex NewObjFromBuf: log: %s\n", msg) }}
 
 	o, err := NewObjFromBuf("forwardObj", []byte(forwardObj), &options)
 	if err != nil {
@@ -151,14 +247,14 @@ s off
 s 1
 `
 
-	options := ObjParserOptions{LogStats: LOG_STATS, Logger: func(msg string) { fmt.Printf("TestMisc NewObjFromBuf: log: %s\n", msg) }}
+	options := ObjParserOptions{LogStats: LogStats, Logger: func(msg string) { fmt.Printf("TestMisc NewObjFromBuf: log: %s\n", msg) }}
 
 	NewObjFromBuf("TestMisc local str obj", []byte(str), &options)
 }
 
 func TestSkippedUV1(t *testing.T) {
 
-	options := ObjParserOptions{LogStats: LOG_STATS, Logger: func(msg string) { fmt.Printf("TestSkippedUV NewObjFromBuf: log: %s\n", msg) }}
+	options := ObjParserOptions{LogStats: LogStats, Logger: func(msg string) { fmt.Printf("TestSkippedUV NewObjFromBuf: log: %s\n", msg) }}
 
 	o, err := NewObjFromBuf("skippedUV", []byte(skippedUVObj), &options)
 	if err != nil {
@@ -177,7 +273,7 @@ func TestSkippedUV1(t *testing.T) {
 
 func TestSkippedUV2(t *testing.T) {
 
-	options := ObjParserOptions{LogStats: LOG_STATS, Logger: func(msg string) { fmt.Printf("TestSkippedUV2 NewObjFromBuf: log: %s\n", msg) }}
+	options := ObjParserOptions{LogStats: LogStats, Logger: func(msg string) { fmt.Printf("TestSkippedUV2 NewObjFromBuf: log: %s\n", msg) }}
 
 	o, err := NewObjFromBuf("skippedUV2", []byte(skippedUV2Obj), &options)
 	if err != nil {

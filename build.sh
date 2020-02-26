@@ -1,33 +1,27 @@
 #!/bin/bash
 
-me=`basename $0`
+me=$(basename "$0")
 msg() {
-    echo >&2 $me: $*
+    echo >&2 "$me:" "$@"
 }
 
-msg fmt
-gofmt -s -w *.go
+# this will acidentally install shadow as a dependency 
+hash shadow 2>/dev/null || go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
 
-msg fix
-go tool fix *.go
-
-msg vet
-go tool vet .
-
-msg install
+gofmt -s -w ./*.go ./example
+go tool fix ./*.go ./example
+go vet -vettool="$(which shadow)" . ./example
 go install
 
-msg gosimple
-hash gosimple 2>/dev/null && gosimple *.go
+#hash gosimple 2>/dev/null    && gosimple    ./*.go
+hash golint 2>/dev/null      && golint      ./*.go
+#hash staticcheck 2>/dev/null && staticcheck ./*.go
 
-msg golint
-hash golint 2>/dev/null && golint *.go
+#hash gosimple 2>/dev/null    && gosimple    ./example/*.go
+hash golint 2>/dev/null      && golint      ./example/*.go
+#hash staticcheck 2>/dev/null && staticcheck ./example/*.go
 
-msg staticcheck
-hash staticcheck 2>/dev/null && staticcheck *.go
-
-msg test
 go test
-
-msg bench
 go test -bench=.
+
+go mod tidy ;# remove non-required modules from dependencies
